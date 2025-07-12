@@ -1,31 +1,35 @@
-// =================== COMEÇA AQUI ===================
 export default async function handler(request, response) {
-    // 1. Pega os segredos do ambiente
+    // Passo 1: Garantir que a requisição é do tipo POST
+    if (request.method !== 'POST') {
+        return response.status(405).json({ message: 'Apenas requisições POST são permitidas' });
+    }
+
+    // Passo 2: A CORREÇÃO PRINCIPAL - Verificar se o corpo da requisição existe
+    // Às vezes, dependendo do ambiente, o corpo precisa ser explicitamente lido.
+    // O Vercel geralmente faz isso para nós, mas esta verificação garante que funcione.
+    if (!request.body) {
+        console.error("ERRO CRÍTICO: O corpo da requisição (request.body) está vazio!");
+        return response.status(400).json({ message: 'Corpo da requisição ausente.' });
+    }
+
+    // Se passamos pelas verificações, agora é seguro usar os dados
+    const { userName, serviceName, date, time } = request.body;
+
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
-    // 2. Pega os dados do agendamento do corpo da requisição
-    const { userName, serviceName, date, time } = request.body;
-
-    // 3. Monta a mensagem
     const message = `*Novo Agendamento!* 🔔
-  
-  *Cliente:* ${userName}
-  *Serviço:* ${serviceName}
-  *Data:* ${date}
-  *Horário:* ${time}
-    `;
-
-    // 4. Monta a URL da API do Telegram
+    Cliente: ${userName}
+Serviço: ${serviceName}
+Data: ${date}
+Horário: ${time}
+`;
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
     try {
-        // 5. Envia a mensagem para a API do Telegram
         const telegramResponse = await fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 chat_id: chatId,
                 text: message,
@@ -33,19 +37,15 @@ export default async function handler(request, response) {
             }),
         });
 
-        // Verifica se a resposta do Telegram foi bem-sucedida
         if (!telegramResponse.ok) {
             const errorData = await telegramResponse.json();
-            throw new Error(`Telegram API error: ${errorData.description}`);
+            throw new Error(`Erro da API do Telegram: ${errorData.description}`);
         }
 
-        // 6. Responde para o nosso app React que deu tudo certo
         response.status(200).json({ status: 'success', message: 'Message sent' });
-
     } catch (error) {
-        // 7. Se der erro, loga o erro e avisa o nosso app React
         console.error("Erro no servidor da Vercel:", error.message);
-        response.status(500).json({ status: 'error', message: 'Failed to send message' });
+        response.status(500).json({ status: 'error', message: 'Falha ao enviar mensagem' });
     }
 }
-// =================== TERMINA AQUI ===================
+```
