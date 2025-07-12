@@ -1,3 +1,4 @@
+// =================== COMEÇA AQUI ===================
 export default async function handler(request, response) {
     // 1. Pega os segredos do ambiente
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -8,11 +9,12 @@ export default async function handler(request, response) {
 
     // 3. Monta a mensagem
     const message = `*Novo Agendamento!* 🔔
-    Cliente: ${userName}
-Serviço: ${serviceName}
-Data: ${date}
-Horário: ${time}
-`;
+  
+  *Cliente:* ${userName}
+  *Serviço:* ${serviceName}
+  *Data:* ${date}
+  *Horário:* ${time}
+    `;
 
     // 4. Monta a URL da API do Telegram
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -33,7 +35,6 @@ Horário: ${time}
 
         // Verifica se a resposta do Telegram foi bem-sucedida
         if (!telegramResponse.ok) {
-            // Se não foi, joga um erro para ser pego pelo catch
             const errorData = await telegramResponse.json();
             throw new Error(`Telegram API error: ${errorData.description}`);
         }
@@ -47,4 +48,4 @@ Horário: ${time}
         response.status(500).json({ status: 'error', message: 'Failed to send message' });
     }
 }
-```
+// =================== TERMINA AQUI ===================
