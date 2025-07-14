@@ -1,37 +1,32 @@
-// ==========================================================
-// INÍCIO DO ARQUIVO: telegram-bot-salao/api/sendMessage.js
-// COPIE TUDO ABAIXO E COLE NO SEU ARQUIVO
-// ==========================================================
-
 export default async function handler(request, response) {
-    // BLOCO 1: Lida com o pedido de permissão de segurança (CORS)
-    // O navegador envia um pedido 'OPTIONS' antes do 'POST' real.
-    // Precisamos responder a ele que o nosso site tem permissão.
+    // Bloco para lidar com a permissão de segurança CORS (preflight)
+    response.setHeader('Access-Control-Allow-Credentials', 'true');
+    response.setHeader('Access-Control-Allow-Origin', '*'); // Em produção, é melhor restringir para 'https://seu-site.web.app'
+    response.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    // Se for o pedido de permissão, apenas respondemos com sucesso e paramos.
     if (request.method === 'OPTIONS') {
-        response.setHeader('Access-Control-Allow-Credentials', 'true');
-        response.setHeader('Access-Control-Allow-Origin', '*'); // Permite qualquer origem
-        response.setHeader('Access-Control-Allow-Methods', 'POST');
-        response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
         return response.status(204).send('');
     }
 
-    // BLOCO 2: Garante que só aceitamos o método 'POST'
+    // Garante que só aceitamos o método 'POST'
     if (request.method !== 'POST') {
         return response.status(405).json({ message: 'Apenas requisições POST são permitidas' });
     }
 
-    // BLOCO 3: Garante que os dados chegaram
+    // Garante que os dados chegaram no corpo da requisição
     if (!request.body) {
         console.error("ERRO CRÍTICO: O corpo da requisição (request.body) está vazio!");
         return response.status(400).json({ message: 'Corpo da requisição ausente.' });
     }
 
-    // BLOCO 4: Extrai os dados e as chaves secretas
+    // Extrai os dados e as chaves secretas
     const { userName, serviceName, date, time } = request.body;
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_CHAT_ID;
 
-    // BLOCO 5: Monta a mensagem de múltiplas linhas (usando a crase `)
+    // Monta a mensagem de múltiplas linhas usando Template Literal (crase)
     const message = `*Novo Agendamento!* 🔔
   
   *Cliente:* ${userName}
@@ -40,9 +35,10 @@ export default async function handler(request, response) {
   *Horário:* ${time}
     `;
 
-    // BLOCO 6: Prepara e envia a mensagem para a API do Telegram
+    // Monta a URL da API do Telegram
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
+    // Tenta enviar a mensagem e responder
     try {
         const telegramResponse = await fetch(url, {
             method: 'POST',
@@ -70,7 +66,3 @@ export default async function handler(request, response) {
         response.status(500).json({ status: 'error', message: 'Falha ao enviar mensagem' });
     }
 }
-
-// ==========================================================
-// FIM DO ARQUIVO
-// ==========================================================
